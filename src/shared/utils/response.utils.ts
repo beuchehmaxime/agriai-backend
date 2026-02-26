@@ -1,0 +1,16 @@
+import { Response } from 'express';
+
+export const sendSuccess = (res: Response, message: string, data?: any, statusCode: number = 200) => {
+    res.status(statusCode).json({
+        success: true,
+        message,
+        data,
+    });
+};
+
+export const sendError = (res: Response, error: any, statusCode: number = 500) => {
+    res.status(statusCode).json({
+        success: false,
+        error: error.message || error || 'Internal Server Error',
+    });
+};

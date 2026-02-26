@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String      @id @default(uuid())
+  phoneNumber  String      @unique
+  email        String?     @unique
+  passwordHash String?
+  name         String?
+  userType     UserType    @default(FARMER)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  diagnoses    Diagnosis[]
+  feedbacks    Feedback[]
+  images       Image[]
+}
+
+model Image {
+  id        String      @id @default(uuid())
+  url       String
+  userId    String
+  createdAt DateTime    @default(now())
+  diagnoses Diagnosis[]
+  user      User        @relation(fields: [userId], references: [id])
+}
+
+model Diagnosis {
+  id         String     @id @default(uuid())
+  imageId    String
+  disease    String
+  confidence Float
+  advice     String
+  cropType   String?
+  symptoms   String?
+  userId     String?
+  createdAt  DateTime   @default(now())
+  image      Image      @relation(fields: [imageId], references: [id])
+  user       User?      @relation(fields: [userId], references: [id])
+  feedbacks  Feedback[]
+}
+
+model Feedback {
+  id          String    @id @default(uuid())
+  diagnosisId String
+  userId      String?
+  outcome     String
+  comment     String?
+  createdAt   DateTime  @default(now())
+  diagnosis   Diagnosis @relation(fields: [diagnosisId], references: [id])
+  user        User?     @relation(fields: [userId], references: [id])
+}
+
+enum UserType {
+  FARMER
+  ADMIN
+  AGRONOMIST
+}
