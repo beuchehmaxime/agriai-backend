@@ -29,12 +29,18 @@ import imageRoutes from './modules/image/image.routes.js';
 import diagnosisRoutes from './modules/diagnosis/diagnosis.routes.js';
 import feedbackRoutes from './modules/feedback/feedback.routes.js';
 import userRoutes from './modules/user/user.routes.js';
+import categoryRoutes from './modules/category/category.routes.js';
+import productRoutes from './modules/product/product.routes.js';
+import orderRoutes from './modules/order/order.routes.js';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/images', imageRoutes);
 app.use('/api/diagnosis', diagnosisRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
 app.use('/uploads', express.static('uploads'));
 
 

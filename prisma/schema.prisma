@@ -18,6 +18,8 @@ model User {
   diagnoses    Diagnosis[]
   feedbacks    Feedback[]
   images       Image[]
+  products     Product[]
+  orders       Order[]     @relation("UserOrders")
 }
 
 model Image {
@@ -26,7 +28,7 @@ model Image {
   userId    String
   createdAt DateTime    @default(now())
   diagnoses Diagnosis[]
-  user      User        @relation(fields: [userId], references: [id])
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Diagnosis {
@@ -39,8 +41,8 @@ model Diagnosis {
   symptoms   String?
   userId     String?
   createdAt  DateTime   @default(now())
-  image      Image      @relation(fields: [imageId], references: [id])
-  user       User?      @relation(fields: [userId], references: [id])
+  image      Image      @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  user       User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
   feedbacks  Feedback[]
 }
 
@@ -51,12 +53,67 @@ model Feedback {
   outcome     String
   comment     String?
   createdAt   DateTime  @default(now())
-  diagnosis   Diagnosis @relation(fields: [diagnosisId], references: [id])
-  user        User?     @relation(fields: [userId], references: [id])
+  diagnosis   Diagnosis @relation(fields: [diagnosisId], references: [id], onDelete: Cascade)
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum UserType {
   FARMER
   ADMIN
   AGRONOMIST
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id            String    @id @default(uuid())
+  name          String
+  description   String
+  price         Float
+  stockQuantity Int
+  imageUrl      String?
+  diseaseTags   String[]
+  categoryId    String
+  category      Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  adminId       String
+  admin         User      @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  orderItems    OrderItem[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  userId      String
+  user        User        @relation("UserOrders", fields: [userId], references: [id], onDelete: Cascade)
+  totalAmount Float
+  status      OrderStatus @default(PENDING)
+  items       OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Float
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
 }
