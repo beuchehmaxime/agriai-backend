@@ -23,7 +23,7 @@ export const predictDisease = async (req: AuthRequest, res: Response) => {
         if (!cropType) {
             return sendError(res, 'cropType is required for ML prediction', 400);
         }
-        
+
         if (!SelectedCropsData.includes(cropType.toLowerCase())) {
             return sendError(res, 'Your selected crop is not supported yet. Please select a different crop.', 400);
         }
@@ -59,4 +59,28 @@ export const getHistory = async (req: AuthRequest, res: Response) => {
     } catch (error: any) {
         sendError(res, error);
     }
-}
+};
+
+export const deleteDiagnosis = async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        const diagnosisId = req.params.id;
+
+        if (!userId || typeof userId !== 'string') {
+            return sendError(res, 'User ID is required', 401);
+        }
+
+        if (!diagnosisId || typeof diagnosisId !== 'string') {
+            return sendError(res, 'Diagnosis ID is required and must be a string', 400);
+        }
+
+        await diagnosisService.deleteDiagnosis(diagnosisId, userId);
+
+        sendSuccess(res, 'Diagnosis deleted successfully');
+    } catch (error: any) {
+        if (error.message === 'Diagnosis not found' || error.message === 'Unauthorized to delete this diagnosis') {
+            return sendError(res, error.message, 404);
+        }
+        sendError(res, error);
+    }
+};

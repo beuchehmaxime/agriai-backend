@@ -9,4 +9,12 @@ export class ImageRepository {
     async findById(id: string): Promise<Image | null> {
         return prisma.image.findUnique({ where: { id } });
     }
+
+    async deleteById(id: string): Promise<Image> {
+        return prisma.image.delete({ where: { id } });
+    }
+
+    async countDiagnoses(imageId: string): Promise<number> {
+        return prisma.diagnosis.count({ where: { imageId } });
+    }
 }

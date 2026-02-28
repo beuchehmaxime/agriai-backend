@@ -7,5 +7,6 @@ const router = Router();
 
 router.post('/predict', authenticate, verifyRole('FARMER'), upload.single('image'), diagnosisController.predictDisease);
 router.get('/history', authenticate, diagnosisController.getHistory);
+router.delete('/:id', authenticate, diagnosisController.deleteDiagnosis);
 
 export default router;

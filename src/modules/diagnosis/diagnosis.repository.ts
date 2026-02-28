@@ -10,7 +10,19 @@ export class DiagnosisRepository {
         return prisma.diagnosis.findUnique({ where: { id } });
     }
 
-    async findByUserId(userId: string): Promise<Diagnosis[]> {
-        return prisma.diagnosis.findMany({ where: { userId } });
+    async findByUserId(userId: string) {
+        return prisma.diagnosis.findMany({
+            where: { userId },
+            include: { image: true },
+            orderBy: { createdAt: 'desc' }
+        });
+    }
+
+    async deleteById(id: string): Promise<Diagnosis> {
+        return prisma.diagnosis.delete({ where: { id } });
+    }
+
+    async deleteFeedbacksByDiagnosisId(diagnosisId: string): Promise<void> {
+        await prisma.feedback.deleteMany({ where: { diagnosisId } });
     }
 }

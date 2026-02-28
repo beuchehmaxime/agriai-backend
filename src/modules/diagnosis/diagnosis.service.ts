@@ -1,5 +1,6 @@
 import { DiagnosisRepository } from './diagnosis.repository.js';
 import { ImageRepository } from '../image/image.repository.js';
+import { ImageService } from '../image/image.service.js';
 import { Diagnosis } from '@prisma/client';
 import axios from 'axios';
 import { GoogleGenAI } from '@google/genai';
@@ -13,11 +14,13 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 export class DiagnosisService {
     private diagnosisRepository: DiagnosisRepository;
     private imageRepository: ImageRepository;
+    private imageService: ImageService;
     private ai: GoogleGenAI | null = null;
 
     constructor() {
         this.diagnosisRepository = new DiagnosisRepository();
         this.imageRepository = new ImageRepository();
+        this.imageService = new ImageService();
 
         if (GEMINI_API_KEY) {
             this.ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
@@ -26,7 +29,7 @@ export class DiagnosisService {
         }
     }
 
-    async diagnoseImage(userId: string, imageId: string, cropType: string, location?: string, symptoms?: string ): Promise<Diagnosis> {
+    async diagnoseImage(userId: string, imageId: string, cropType: string, location?: string, symptoms?: string): Promise<Diagnosis> {
 
         const image = await this.imageRepository.findById(imageId);
         if (!image) throw new Error('Image not found');
@@ -38,7 +41,7 @@ export class DiagnosisService {
         let confidence = 0;
 
         try {
-           
+
 
             console.log(`Sending image to ML Service: ${ML_SERVICE_URL}/${cropType}/predict`);
 
@@ -50,9 +53,9 @@ export class DiagnosisService {
             });
 
             if (mlResponse.data) {
-                 const rawDisease = mlResponse.data.disease || 'Unknown';
-                 disease = this.formatDiseaseName(rawDisease);
-                 confidence = mlResponse.data.confidence || 0;
+                const rawDisease = mlResponse.data.disease || 'Unknown';
+                disease = this.formatDiseaseName(rawDisease);
+                confidence = mlResponse.data.confidence || 0;
             }
         } catch (error) {
             console.error('Error calling ML Service:', error instanceof Error ? error.message : error);
@@ -130,8 +133,50 @@ export class DiagnosisService {
         });
     }
 
-    async getHistory(userId: string): Promise<Diagnosis[]> {
-        return this.diagnosisRepository.findByUserId(userId);
+    async getHistory(userId: string) {
+        const diagnoses = await this.diagnosisRepository.findByUserId(userId);
+
+        return diagnoses.map(d => ({
+            id: d.id,
+            disease: d.disease,
+            confidence: d.confidence,
+            advice: d.advice,
+            cropType: d.cropType || '',
+            crop: d.cropType || undefined,
+            symptoms: d.symptoms || undefined,
+            imageUrl: d.image?.url || undefined,
+            imageUri: d.image?.url || undefined,
+            createdAt: d.createdAt.toISOString(),
+            image: d.image ? {
+                id: d.image.id,
+                url: d.image.url
+            } : undefined
+        }));
+    }
+
+    async deleteDiagnosis(diagnosisId: string, userId: string): Promise<boolean> {
+        const diagnosis = await this.diagnosisRepository.findById(diagnosisId);
+
+        if (!diagnosis) {
+            throw new Error('Diagnosis not found');
+        }
+
+        if (diagnosis.userId !== userId) {
+            throw new Error('Unauthorized to delete this diagnosis');
+        }
+
+        const imageId = diagnosis.imageId;
+
+        // 1. Delete associated feedbacks
+        await this.diagnosisRepository.deleteFeedbacksByDiagnosisId(diagnosisId);
+
+        // 2. Delete diagnosis
+        await this.diagnosisRepository.deleteById(diagnosisId);
+
+        // 3. Attempt to delete image (service will check if it's safe to delete)
+        await this.imageService.deleteImage(imageId);
+
+        return true;
     }
 
     private formatDiseaseName(disease: string): string {
