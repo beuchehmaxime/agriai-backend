@@ -66,3 +66,12 @@ export const register = async (req: Request, res: Response) => {
     }
 };
 
+export const logout = async (req: Request, res: Response) => {
+    try {
+        // For stateless JWT, log out is mainly clearing the token client-side.
+        // We acknowledge it here.
+        sendSuccess(res, 'Logged out successfully');
+    } catch (error: any) {
+        sendError(res, error, 500);
+    }
+};
