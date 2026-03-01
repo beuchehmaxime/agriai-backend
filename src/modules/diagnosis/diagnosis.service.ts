@@ -93,12 +93,16 @@ export class DiagnosisService {
                         Keep it concise and farmer-friendly.
                         `;
                 } else {
+                    const isLowConfidence = confidence < 0.9;
+
                     prompt = `
                         The ML system diagnosed **${disease}** with confidence ${confidence}.
 
                         ${contextInfo}
 
-                        Provide:
+                        ${isLowConfidence
+                            ? 'Since the confidence is below 90%, the VERY FIRST text in your response MUST be a warning telling the user to be careful with the medication and consult an expert.\\n\\n                        Below that warning text, provide:'
+                            : 'Provide:'}
                         1. Short explanation of the disease
                         2. Treatment steps (chemical + organic)
                         3. Prevention tips for future seasons
