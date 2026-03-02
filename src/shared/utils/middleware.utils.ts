@@ -41,7 +41,12 @@ export const verifyRole = (...allowedRoles: UserType[]) => {
     return (req: AuthRequest, res: Response, next: NextFunction) => {
         const user = req.user;
 
-        if (!user || !allowedRoles.includes(user.userType)) {
+        const effectiveRoles = [...allowedRoles];
+        if (effectiveRoles.includes('FARMER') && !effectiveRoles.includes('AGRONOMIST')) {
+            effectiveRoles.push('AGRONOMIST');
+        }
+
+        if (!user || !effectiveRoles.includes(user.userType)) {
             return res.status(403).json({ message: "Forbidden: You don't have permission to access this resource." });
         }
 

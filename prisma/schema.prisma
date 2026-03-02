@@ -19,7 +19,13 @@ model User {
   feedbacks    Feedback[]
   images       Image[]
   products     Product[]
-  orders       Order[]     @relation("UserOrders")
+  orders             Order[]              @relation("UserOrders")
+  isOnline           Boolean              @default(false)
+  lastActive         DateTime             @default(now())
+  expertApplications ExpertApplication[]
+  consultationsAsFarmer Consultation[]    @relation("FarmerConsultations")
+  consultationsAsAgro   Consultation[]    @relation("AgroConsultations")
+  messages           Message[]
 }
 
 model Image {
@@ -117,3 +123,55 @@ enum OrderStatus {
   DELIVERED
   CANCELLED
 }
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ConsultationStatus {
+  ACTIVE
+  CLOSED
+}
+
+model ExpertApplication {
+  id              String            @id @default(uuid())
+  userId          String
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  experience      String
+  qualifications  String
+  certificateType String
+  obtainedYear    String
+  institution     String
+  certificateUrl  String
+  status          ApplicationStatus @default(PENDING)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model Consultation {
+  id             String             @id @default(uuid())
+  farmerId       String
+  farmer         User               @relation("FarmerConsultations", fields: [farmerId], references: [id], onDelete: Cascade)
+  agronomistId   String
+  agronomist     User               @relation("AgroConsultations", fields: [agronomistId], references: [id], onDelete: Cascade)
+  status         ConsultationStatus @default(ACTIVE)
+  messages       Message[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  consultationId String
+  consultation   Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  text           String?
+  imageUrl       String?
+  isRead         Boolean      @default(false)
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+}
+

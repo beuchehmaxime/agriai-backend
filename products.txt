@@ -1,0 +1,39 @@
+[
+  "Premium Tomato Seeds",
+  "High-yield tomato seeds suitable for greenhouse and open field cultivation. Disease resistant.",
+  15.99,
+  200,
+  "Seeds & Seedlings"
+]
+
+[
+  "Organic NPK Fertilizer 20-20-20",
+  "Balanced organic fertilizer for all stages of plant growth. Ensures vibrant leaves and strong roots.",
+  45.50,
+  50,
+  "Fertilizers & Nutrients"
+]
+
+[
+  "Heavy Duty Hand Trowel",
+  "Rust-resistant carbon steel hand trowel with ergonomic grip for easy planting and weeding.",
+  12.00,
+  120,
+  "Farming Tools & Equipment"
+]
+
+[
+  "Neem Oil Pest Repellent (1L)",
+  "Natural cold-pressed neem oil. Highly effective against aphids, mites, and whiteflies.",
+  24.99,
+  80,
+  "Pesticides & Herbicides"
+]
+
+[
+  "Drip Irrigation Kit (50m)",
+  "Complete precision drip irrigation system. Saves water and delivers nutrients directly to plant roots.",
+  85.00,
+  35,
+  "Irrigation Supplies"
+]
