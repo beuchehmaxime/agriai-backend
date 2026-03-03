@@ -1,0 +1,45 @@
+# Render Blueprint Configuration
+# This file automates the creation of your PostgreSQL database and Node.js backend.
+# Push this file to your GitHub repository and connect it to Render via "Blueprint".
+
+services:
+  # The Node.js Web API Service
+  - type: web
+    name: agriai-backend
+    env: node
+    plan: free
+    region: ohio
+    buildCommand: "npm install && npm run build"
+    preDeployCommand: "npx prisma migrate deploy"
+    startCommand: "npm run start"
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      # Auto-link the auto-provisioned Postgres database connection string
+      - key: DATABASE_URL
+        fromDatabase:
+          name: agriai
+          property: connectionString
+      # Secrets. 'sync: false' means Render will prompt you to enter these in the dashboard securely.
+      - key: JWT_SECRET
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ML_SERVICE_URL
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+databases:
+  # The Auto-Provisioned PostgreSQL Database
+  - name: agriai
+    databaseName: agriai
+    user: agriai
+    plan: free
+    region: ohio
