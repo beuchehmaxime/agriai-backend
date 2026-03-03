@@ -37,7 +37,8 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
 
         let orders;
         if (userType === 'ADMIN') {
-            orders = await orderService.getAllOrders();
+            const { search } = req.query;
+            orders = await orderService.getAllOrders(search as string);
         } else {
             orders = await orderService.getUserOrders(userId);
         }
@@ -80,6 +81,19 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 
         const updatedOrder = await orderService.updateOrderStatus(id, status as OrderStatus);
         sendSuccess(res, 'Order status updated successfully', updatedOrder);
+    } catch (error: any) {
+        if (error.message === 'Order not found') {
+            return sendError(res, error.message, 404);
+        }
+        sendError(res, error);
+    }
+};
+
+export const deleteOrder = async (req: Request, res: Response) => {
+    try {
+        const id = req.params.id as string;
+        await orderService.deleteOrder(id);
+        sendSuccess(res, 'Order deleted successfully');
     } catch (error: any) {
         if (error.message === 'Order not found') {
             return sendError(res, error.message, 404);

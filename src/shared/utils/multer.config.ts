@@ -19,7 +19,7 @@ const pdfStorage = new CloudinaryStorage({
         allowed_formats: ['pdf'],
         format: 'pdf',
         resource_type: 'raw',
-        public_id: (req: any, file: any) => `cert-${Date.now()}-${Math.round(Math.random() * 1000)}`,
+        public_id: (req: any, file: any) => `cert-${Date.now()}-${Math.round(Math.random() * 1000)}.pdf`,
         timeout: 120000 // 120 seconds timeout
     } as any
 });
@@ -33,7 +33,7 @@ export const uploadPdf = multer({
     storage: pdfStorage,
     limits: { fileSize: 2 * 1024 * 1024 }, // Limit file size to 2MB specifically for PDFs
     fileFilter: (req, file, cb) => {
-        if (file.mimetype === 'application/pdf') {
+        if (file.mimetype === 'application/pdf' && file.originalname.toLowerCase().endsWith('.pdf')) {
             cb(null, true);
         } else {
             cb(new Error('Only PDF files are allowed!'));

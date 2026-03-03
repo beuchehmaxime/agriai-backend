@@ -7,25 +7,27 @@ datasource db {
 }
 
 model User {
-  id           String      @id @default(uuid())
-  phoneNumber  String      @unique
-  email        String?     @unique
-  passwordHash String?
-  name         String?
-  userType     UserType    @default(FARMER)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  diagnoses    Diagnosis[]
-  feedbacks    Feedback[]
-  images       Image[]
-  products     Product[]
-  orders             Order[]              @relation("UserOrders")
-  isOnline           Boolean              @default(false)
-  lastActive         DateTime             @default(now())
-  expertApplications ExpertApplication[]
-  consultationsAsFarmer Consultation[]    @relation("FarmerConsultations")
-  consultationsAsAgro   Consultation[]    @relation("AgroConsultations")
-  messages           Message[]
+  id                    String              @id @default(uuid())
+  phoneNumber           String              @unique
+  email                 String?             @unique
+  passwordHash          String?
+  name                  String?
+  userType              UserType            @default(FARMER)
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  diagnoses             Diagnosis[]
+  feedbacks             Feedback[]
+  images                Image[]
+  products              Product[]
+  orders                Order[]             @relation("UserOrders")
+  isOnline              Boolean             @default(false)
+  lastActive            DateTime            @default(now())
+  expertApplications    ExpertApplication[]
+  consultationsAsFarmer Consultation[]      @relation("FarmerConsultations")
+  consultationsAsAgro   Consultation[]      @relation("AgroConsultations")
+  messages              Message[]
+  tips                  Tip[]
+  tipVotes              TipVote[]
 }
 
 model Image {
@@ -79,7 +81,7 @@ model Category {
 }
 
 model Product {
-  id            String    @id @default(uuid())
+  id            String      @id @default(uuid())
   name          String
   description   String
   price         Float
@@ -87,12 +89,12 @@ model Product {
   imageUrl      String?
   diseaseTags   String[]
   categoryId    String
-  category      Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category      Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   adminId       String
-  admin         User      @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  admin         User        @relation(fields: [adminId], references: [id], onDelete: Cascade)
   orderItems    OrderItem[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 }
 
 model Order {
@@ -151,15 +153,15 @@ model ExpertApplication {
 }
 
 model Consultation {
-  id             String             @id @default(uuid())
-  farmerId       String
-  farmer         User               @relation("FarmerConsultations", fields: [farmerId], references: [id], onDelete: Cascade)
-  agronomistId   String
-  agronomist     User               @relation("AgroConsultations", fields: [agronomistId], references: [id], onDelete: Cascade)
-  status         ConsultationStatus @default(ACTIVE)
-  messages       Message[]
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  id           String             @id @default(uuid())
+  farmerId     String
+  farmer       User               @relation("FarmerConsultations", fields: [farmerId], references: [id], onDelete: Cascade)
+  agronomistId String
+  agronomist   User               @relation("AgroConsultations", fields: [agronomistId], references: [id], onDelete: Cascade)
+  status       ConsultationStatus @default(ACTIVE)
+  messages     Message[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
 }
 
 model Message {
@@ -175,3 +177,33 @@ model Message {
   createdAt      DateTime     @default(now())
 }
 
+enum TipStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Tip {
+  id        String    @id @default(uuid())
+  title     String
+  content   String    @db.Text
+  imageUrl  String?
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  status    TipStatus @default(PENDING)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  votes     TipVote[]
+}
+
+model TipVote {
+  id        String   @id @default(uuid())
+  tipId     String
+  tip       Tip      @relation(fields: [tipId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isHelpful Boolean
+  createdAt DateTime @default(now())
+
+  @@unique([tipId, userId]) // User can vote once per tip
+}

@@ -6,6 +6,16 @@ export class UserRepository {
         return prisma.user.findUnique({ where: { phoneNumber } });
     }
 
+    async findAll(): Promise<User[]> {
+        const users = await prisma.user.findMany({
+            orderBy: { createdAt: 'desc' }
+        });
+        return users.map(user => {
+            const { passwordHash, ...safeUser } = user;
+            return { ...safeUser, passwordHash: null } as unknown as User;
+        });
+    }
+
     async create(data: Prisma.UserCreateInput): Promise<User> {
         return prisma.user.create({ data });
     }

@@ -46,6 +46,8 @@ import orderRoutes from './modules/order/order.routes.js';
 import expertApplicationRoutes from './modules/expert-application/expert-application.routes.js';
 import consultationRoutes from './modules/consultation/consultation.routes.js';
 import messageRoutes from './modules/message/message.routes.js';
+import tipRoutes from './modules/tip/tip.routes.js';
+import dashboardRoutes from './modules/dashboard/dashboard.routes.js';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/images', imageRoutes);
@@ -58,12 +60,17 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/expert-application', expertApplicationRoutes);
 app.use('/api/consultations', consultationRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/tips', tipRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 app.use('/uploads', express.static('uploads'));
 
 
 // Error Handling Middleware
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     console.error('[ERROR]', err);
+    if (err.name === 'MulterError' || err.message === 'Only PDF files are allowed!') {
+        return sendError(res, err.message, 400);
+    }
     sendError(res, err, 500);
 });
 
