@@ -7,13 +7,13 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "moduleResolution": "node16"
+    "moduleResolution": "node16",
+    "skipLibCheck": true
   },
-  "ts-node": {
-    "esm": true
-  },
+  "include": ["src/**/*"],
   "exclude": [
     "node_modules",
+    "scripts",
     "prisma.config.ts"
   ]
 }
