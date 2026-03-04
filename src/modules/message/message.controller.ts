@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { MessageService } from './message.service.js';
 import { sendSuccess, sendError } from '../../shared/utils/response.utils.js';
-import { AuthRequest } from '../../shared/utils/middleware.utils.js';
+import { AuthRequest } from '../../types/auth-request.js';
 
 const messageService = new MessageService();
 

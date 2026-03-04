@@ -3,7 +3,7 @@ import { ExpertApplicationService } from './expert-application.service.js';
 
 import { sendSuccess, sendError } from '../../shared/utils/response.utils.js';
 import { ApplicationStatus } from '@prisma/client';
-import { AuthRequest } from '../../shared/utils/middleware.utils.js';
+import { AuthRequest } from '../../types/auth-request.js';
 
 const expertApplicationService = new ExpertApplicationService();
 
@@ -11,7 +11,7 @@ export const submitApplication = async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user!.id;
         const { experience, qualifications, certificateType, obtainedYear, institution } = req.body;
-        
+
         if (!experience) return sendError(res, new Error('Experience detail must be stated.'), 400);
         if (!qualifications || qualifications.length < 10) return sendError(res, new Error('Qualifications detail must be at least 10 characters long'), 400);
         if (!certificateType || certificateType.length < 2) return sendError(res, new Error('Certificate type must be specified'), 400);

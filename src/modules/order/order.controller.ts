@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { OrderService } from './order.service.js';
 import { sendSuccess, sendError } from '../../shared/utils/response.utils.js';
-import { AuthRequest } from '../../shared/utils/middleware.utils.js';
+import { AuthRequest } from '../../types/auth-request.js';
 import { OrderStatus } from '@prisma/client';
 
 const orderService = new OrderService();

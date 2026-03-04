@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { TipService } from './tip.service.js';
 import { sendSuccess, sendError } from '../../shared/utils/response.utils.js';
-import { AuthRequest } from '../../shared/utils/middleware.utils.js';
+import { AuthRequest } from '../../types/auth-request.js';
 import { TipStatus } from '@prisma/client';
 
 const tipService = new TipService();

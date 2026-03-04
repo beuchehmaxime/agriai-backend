@@ -3,12 +3,7 @@ import jwt from 'jsonwebtoken';
 import { User, UserType } from '@prisma/client';
 import { UserRepository } from '../../modules/user/user.repository.js';
 
-// Extend Express Request interface to include user
-export interface AuthRequest extends Request {
-    user?: User;
-    file?: Express.Multer.File;
-    files?: Express.Multer.File[] | { [fieldname: string]: Express.Multer.File[] };
-}
+import { AuthRequest } from '../../types/auth-request.js';
 
 const userRepository = new UserRepository();
 

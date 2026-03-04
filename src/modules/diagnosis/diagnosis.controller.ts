@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { DiagnosisService } from './diagnosis.service.js';
 import { ImageService } from '../image/image.service.js';
 import { sendSuccess, sendError } from '../../shared/utils/response.utils.js';
-import { AuthRequest } from '../../shared/utils/middleware.utils.js';
+import { AuthRequest } from '../../types/auth-request.js';
 import { SelectedCropsData } from '../../shared/utils/data.js';
 
 const diagnosisService = new DiagnosisService();
