@@ -59,6 +59,9 @@ app.use('/uploads', express.static('uploads'));
 // Error Handling Middleware
 app.use((err, req, res, next) => {
     console.error('[ERROR]', err);
+    if (err.name === 'MulterError' || err.message === 'Only PDF files are allowed!') {
+        return sendError(res, err.message, 400);
+    }
     sendError(res, err, 500);
 });
 export default app;

@@ -8,4 +8,5 @@ router.get('/', authenticate, orderController.getOrders);
 router.get('/:id', authenticate, orderController.getOrderById);
 // Admin endpoints
 router.patch('/:id/status', authenticate, verifyRole('ADMIN'), orderController.updateOrderStatus);
+router.delete('/:id', authenticate, verifyRole('ADMIN'), orderController.deleteOrder);
 export default router;

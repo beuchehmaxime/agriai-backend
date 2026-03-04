@@ -30,7 +30,8 @@ export const getOrders = async (req, res) => {
             return sendError(res, 'Unauthorized', 401);
         let orders;
         if (userType === 'ADMIN') {
-            orders = await orderService.getAllOrders();
+            const { search } = req.query;
+            orders = await orderService.getAllOrders(search);
         }
         else {
             orders = await orderService.getUserOrders(userId);
@@ -68,6 +69,19 @@ export const updateOrderStatus = async (req, res) => {
         }
         const updatedOrder = await orderService.updateOrderStatus(id, status);
         sendSuccess(res, 'Order status updated successfully', updatedOrder);
+    }
+    catch (error) {
+        if (error.message === 'Order not found') {
+            return sendError(res, error.message, 404);
+        }
+        sendError(res, error);
+    }
+};
+export const deleteOrder = async (req, res) => {
+    try {
+        const id = req.params.id;
+        await orderService.deleteOrder(id);
+        sendSuccess(res, 'Order deleted successfully');
     }
     catch (error) {
         if (error.message === 'Order not found') {

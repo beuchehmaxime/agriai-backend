@@ -32,7 +32,7 @@ const upload = multer({
 export const uploadPdf = multer({
     storage: pdfStorage,
     limits: { fileSize: 2 * 1024 * 1024 }, // Limit file size to 2MB specifically for PDFs
-    fileFilter: (req, file, cb) => {
+    fileFilter: (req: any, file: any, cb: any) => {
         if (file.mimetype === 'application/pdf' && file.originalname.toLowerCase().endsWith('.pdf')) {
             cb(null, true);
         } else {

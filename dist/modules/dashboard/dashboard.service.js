@@ -1,5 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import prisma from '../../shared/prisma/prisma.service.js';
 export class DashboardService {
     async getStats() {
         // Fetch all counts in parallel for performance

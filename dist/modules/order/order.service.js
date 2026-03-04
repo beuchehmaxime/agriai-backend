@@ -52,8 +52,8 @@ export class OrderService {
     async getUserOrders(userId) {
         return this.orderRepository.findByUserId(userId);
     }
-    async getAllOrders() {
-        return this.orderRepository.findAll();
+    async getAllOrders(search) {
+        return this.orderRepository.findAll(search);
     }
     async getOrderById(id) {
         const order = await this.orderRepository.findById(id);
@@ -66,5 +66,11 @@ export class OrderService {
         if (!order)
             throw new Error('Order not found');
         return this.orderRepository.updateStatus(id, status);
+    }
+    async deleteOrder(id) {
+        const order = await this.orderRepository.findById(id);
+        if (!order)
+            throw new Error('Order not found');
+        await this.orderRepository.delete(id);
     }
 }

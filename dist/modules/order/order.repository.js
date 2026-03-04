@@ -6,8 +6,15 @@ export class OrderRepository {
             include: { items: { include: { product: true } } }
         });
     }
-    async findAll() {
+    async findAll(search) {
+        const whereClause = search ? {
+            OR: [
+                { id: { contains: search, mode: 'insensitive' } },
+                { user: { name: { contains: search, mode: 'insensitive' } } }
+            ]
+        } : {};
         return prisma.order.findMany({
+            where: whereClause,
             include: { items: { include: { product: true } }, user: { select: { name: true, phoneNumber: true } } },
             orderBy: { createdAt: 'desc' }
         });
@@ -29,6 +36,11 @@ export class OrderRepository {
         return prisma.order.update({
             where: { id },
             data: { status }
+        });
+    }
+    async delete(id) {
+        return prisma.order.delete({
+            where: { id }
         });
     }
 }
