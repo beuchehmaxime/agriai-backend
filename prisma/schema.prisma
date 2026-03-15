@@ -15,22 +15,22 @@ model User {
   userType              UserType            @default(FARMER)
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
-  diagnoses             Diagnosis[]
-  feedbacks             Feedback[]
-  images                Image[]
-  products              Product[]
-  orders                Order[]             @relation("UserOrders")
   isOnline              Boolean             @default(false)
   lastActive            DateTime            @default(now())
-  expertApplications    ExpertApplication[]
-  consultationsAsFarmer Consultation[]      @relation("FarmerConsultations")
+  walletBalance         Float               @default(0)
   consultationsAsAgro   Consultation[]      @relation("AgroConsultations")
+  consultationsAsFarmer Consultation[]      @relation("FarmerConsultations")
+  diagnoses             Diagnosis[]
+  expertApplications    ExpertApplication[]
+  feedbacks             Feedback[]
+  images                Image[]
   messages              Message[]
+  orders                Order[]             @relation("UserOrders")
+  products              Product[]
+  farmerSubscriptions   Subscription[]      @relation("FarmerSubscriptions")
+  subscriptionPlans     SubscriptionPlan[]  @relation("AgronomistPlans")
   tips                  Tip[]
   tipVotes              TipVote[]
-  walletBalance         Float               @default(0)
-  subscriptionPlans     SubscriptionPlan[]  @relation("AgronomistPlans")
-  farmerSubscriptions   Subscription[]      @relation("FarmerSubscriptions")
   transactions          Transaction[]
 }
 
@@ -49,10 +49,10 @@ model Diagnosis {
   disease    String
   confidence Float
   advice     String
-  cropType   String?
-  symptoms   String?
   userId     String?
   createdAt  DateTime   @default(now())
+  cropType   String?
+  symptoms   String?
   image      Image      @relation(fields: [imageId], references: [id], onDelete: Cascade)
   user       User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
   feedbacks  Feedback[]
@@ -69,19 +69,13 @@ model Feedback {
   user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-enum UserType {
-  FARMER
-  ADMIN
-  AGRONOMIST
-}
-
 model Category {
   id          String    @id @default(uuid())
   name        String    @unique
   description String?
-  products    Product[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  products    Product[]
 }
 
 model Product {
@@ -93,31 +87,25 @@ model Product {
   imageUrl      String?
   diseaseTags   String[]
   categoryId    String
-  category      Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   adminId       String
-  admin         User        @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  orderItems    OrderItem[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
-}
-
-enum OrderPaymentMethod {
-  MTN_MOMO
-  ORANGE_MOMO
-  CASH_ON_DELIVERY
+  orderItems    OrderItem[]
+  admin         User        @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  category      Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 }
 
 model Order {
   id            String              @id @default(uuid())
   userId        String
-  user          User                @relation("UserOrders", fields: [userId], references: [id], onDelete: Cascade)
   totalAmount   Float
   status        OrderStatus         @default(PENDING)
-  paymentMethod OrderPaymentMethod?
-  paymentStatus TransactionStatus   @default(PENDING)
-  items         OrderItem[]
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
+  paymentMethod OrderPaymentMethod?
+  paymentStatus TransactionStatus   @default(PENDING)
+  user          User                @relation("UserOrders", fields: [userId], references: [id], onDelete: Cascade)
+  items         OrderItem[]
 }
 
 model OrderItem {
@@ -128,6 +116,128 @@ model OrderItem {
   price     Float
   order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model ExpertApplication {
+  id              String            @id @default(uuid())
+  userId          String
+  experience      String
+  qualifications  String
+  certificateType String
+  obtainedYear    String
+  institution     String
+  certificateUrl  String
+  status          ApplicationStatus @default(PENDING)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Consultation {
+  id           String             @id @default(uuid())
+  farmerId     String
+  agronomistId String
+  status       ConsultationStatus @default(ACTIVE)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  agronomist   User               @relation("AgroConsultations", fields: [agronomistId], references: [id], onDelete: Cascade)
+  farmer       User               @relation("FarmerConsultations", fields: [farmerId], references: [id], onDelete: Cascade)
+  messages     Message[]
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  consultationId String
+  senderId       String
+  text           String?
+  imageUrl       String?
+  createdAt      DateTime     @default(now())
+  isRead         Boolean      @default(false)
+  readAt         DateTime?
+  consultation   Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+}
+
+model Tip {
+  id        String    @id @default(uuid())
+  title     String
+  content   String
+  imageUrl  String?
+  authorId  String
+  status    TipStatus @default(PENDING)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  votes     TipVote[]
+}
+
+model TipVote {
+  id        String   @id @default(uuid())
+  tipId     String
+  userId    String
+  isHelpful Boolean
+  createdAt DateTime @default(now())
+  tip       Tip      @relation(fields: [tipId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tipId, userId])
+}
+
+model SubscriptionPlan {
+  id            String         @id @default(uuid())
+  agronomistId  String
+  type          PlanType
+  price         Float
+  durationHours Int?
+  title         String
+  description   String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  subscriptions Subscription[]
+  agronomist    User           @relation("AgronomistPlans", fields: [agronomistId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id             String            @id @default(uuid())
+  farmerId       String
+  planId         String
+  hoursPurchased Int?
+  hoursUsed      Float             @default(0)
+  isUnlimited    Boolean           @default(false)
+  status         TransactionStatus @default(PENDING)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  farmer         User              @relation("FarmerSubscriptions", fields: [farmerId], references: [id], onDelete: Cascade)
+  plan           SubscriptionPlan  @relation(fields: [planId], references: [id], onDelete: Cascade)
+}
+
+model Transaction {
+  id          String            @id @default(uuid())
+  userId      String
+  amount      Float
+  currency    String            @default("XAF")
+  type        TransactionType
+  provider    PaymentProvider
+  phoneNumber String
+  reference   String            @unique
+  companyCut  Float?
+  netAmount   Float?
+  status      TransactionStatus @default(PENDING)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum UserType {
+  FARMER
+  ADMIN
+  AGRONOMIST
+}
+
+enum OrderPaymentMethod {
+  MTN_MOMO
+  ORANGE_MOMO
+  CASH_ON_DELIVERY
 }
 
 enum OrderStatus {
@@ -149,75 +259,10 @@ enum ConsultationStatus {
   CLOSED
 }
 
-model ExpertApplication {
-  id              String            @id @default(uuid())
-  userId          String
-  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  experience      String
-  qualifications  String
-  certificateType String
-  obtainedYear    String
-  institution     String
-  certificateUrl  String
-  status          ApplicationStatus @default(PENDING)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-}
-
-model Consultation {
-  id           String             @id @default(uuid())
-  farmerId     String
-  farmer       User               @relation("FarmerConsultations", fields: [farmerId], references: [id], onDelete: Cascade)
-  agronomistId String
-  agronomist   User               @relation("AgroConsultations", fields: [agronomistId], references: [id], onDelete: Cascade)
-  status       ConsultationStatus @default(ACTIVE)
-  messages     Message[]
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
-}
-
-model Message {
-  id             String       @id @default(uuid())
-  consultationId String
-  consultation   Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
-  senderId       String
-  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  text           String?
-  imageUrl       String?
-  isRead         Boolean      @default(false)
-  readAt         DateTime?
-  createdAt      DateTime     @default(now())
-}
-
 enum TipStatus {
   PENDING
   APPROVED
   REJECTED
-}
-
-model Tip {
-  id        String    @id @default(uuid())
-  title     String
-  content   String    @db.Text
-  imageUrl  String?
-  authorId  String
-  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  status    TipStatus @default(PENDING)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  votes     TipVote[]
-}
-
-model TipVote {
-  id        String   @id @default(uuid())
-  tipId     String
-  tip       Tip      @relation(fields: [tipId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  isHelpful Boolean
-  createdAt DateTime @default(now())
-
-  @@unique([tipId, userId]) // User can vote once per tip
 }
 
 enum PlanType {
@@ -239,49 +284,4 @@ enum TransactionStatus {
 enum TransactionType {
   PAYMENT
   WITHDRAWAL
-}
-
-model SubscriptionPlan {
-  id            String         @id @default(uuid())
-  agronomistId  String
-  agronomist    User           @relation("AgronomistPlans", fields: [agronomistId], references: [id], onDelete: Cascade)
-  type          PlanType
-  price         Float
-  durationHours Int? // Null for unlimited ONE_TIME plans
-  title         String
-  description   String?
-  subscriptions Subscription[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-}
-
-model Subscription {
-  id             String            @id @default(uuid())
-  farmerId       String
-  farmer         User              @relation("FarmerSubscriptions", fields: [farmerId], references: [id], onDelete: Cascade)
-  planId         String
-  plan           SubscriptionPlan  @relation(fields: [planId], references: [id], onDelete: Cascade)
-  hoursPurchased Int?
-  hoursUsed      Float             @default(0)
-  isUnlimited    Boolean           @default(false)
-  status         TransactionStatus @default(PENDING)
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-}
-
-model Transaction {
-  id          String            @id @default(uuid())
-  userId      String
-  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  amount      Float
-  currency    String            @default("XAF")
-  type        TransactionType
-  provider    PaymentProvider
-  phoneNumber String
-  reference   String            @unique
-  companyCut  Float?
-  netAmount   Float?
-  status      TransactionStatus @default(PENDING)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
 }
