@@ -8,11 +8,17 @@ export const createOrder = async (req, res) => {
         if (!userId) {
             return sendError(res, 'Unauthorized', 401);
         }
-        const { items } = req.body;
+        const { items, paymentMethod, phoneNumber } = req.body;
         if (!items || !Array.isArray(items) || items.length === 0) {
             return sendError(res, 'Order must contain an array of items with productId and quantity', 400);
         }
-        const order = await orderService.createOrder(userId, items);
+        if (!paymentMethod || !['MTN_MOMO', 'ORANGE_MOMO', 'CASH_ON_DELIVERY'].includes(paymentMethod)) {
+            return sendError(res, 'Valid paymentMethod (MTN_MOMO, ORANGE_MOMO, CASH_ON_DELIVERY) is required', 400);
+        }
+        if (['MTN_MOMO', 'ORANGE_MOMO'].includes(paymentMethod) && !phoneNumber) {
+            return sendError(res, 'phoneNumber is required for Momo payments', 400);
+        }
+        const order = await orderService.createOrder(userId, items, paymentMethod, phoneNumber);
         sendSuccess(res, 'Order placed successfully', order, 201);
     }
     catch (error) {

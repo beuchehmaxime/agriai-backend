@@ -42,6 +42,9 @@ import consultationRoutes from './modules/consultation/consultation.routes.js';
 import messageRoutes from './modules/message/message.routes.js';
 import tipRoutes from './modules/tip/tip.routes.js';
 import dashboardRoutes from './modules/dashboard/dashboard.routes.js';
+import subscriptionPlanRoutes from './modules/subscription-plan/subscription-plan.routes.js';
+import subscriptionRoutes from './modules/subscription/subscription.routes.js';
+import transactionRoutes from './modules/transaction/transaction.routes.js';
 app.use('/api/auth', authRoutes);
 app.use('/api/images', imageRoutes);
 app.use('/api/diagnosis', diagnosisRoutes);
@@ -55,6 +58,9 @@ app.use('/api/consultations', consultationRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/tips', tipRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/subscription-plans', subscriptionPlanRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/transactions', transactionRoutes);
 app.use('/uploads', express.static('uploads'));
 // Error Handling Middleware
 app.use((err, req, res, next) => {

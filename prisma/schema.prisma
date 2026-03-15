@@ -28,6 +28,10 @@ model User {
   messages              Message[]
   tips                  Tip[]
   tipVotes              TipVote[]
+  walletBalance         Float               @default(0)
+  subscriptionPlans     SubscriptionPlan[]  @relation("AgronomistPlans")
+  farmerSubscriptions   Subscription[]      @relation("FarmerSubscriptions")
+  transactions          Transaction[]
 }
 
 model Image {
@@ -97,15 +101,23 @@ model Product {
   updatedAt     DateTime    @updatedAt
 }
 
+enum OrderPaymentMethod {
+  MTN_MOMO
+  ORANGE_MOMO
+  CASH_ON_DELIVERY
+}
+
 model Order {
-  id          String      @id @default(uuid())
-  userId      String
-  user        User        @relation("UserOrders", fields: [userId], references: [id], onDelete: Cascade)
-  totalAmount Float
-  status      OrderStatus @default(PENDING)
-  items       OrderItem[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id            String              @id @default(uuid())
+  userId        String
+  user          User                @relation("UserOrders", fields: [userId], references: [id], onDelete: Cascade)
+  totalAmount   Float
+  status        OrderStatus         @default(PENDING)
+  paymentMethod OrderPaymentMethod?
+  paymentStatus TransactionStatus   @default(PENDING)
+  items         OrderItem[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
 }
 
 model OrderItem {
@@ -206,4 +218,70 @@ model TipVote {
   createdAt DateTime @default(now())
 
   @@unique([tipId, userId]) // User can vote once per tip
+}
+
+enum PlanType {
+  HOURLY
+  ONE_TIME
+}
+
+enum PaymentProvider {
+  MTN_MOMO
+  ORANGE_MOMO
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum TransactionType {
+  PAYMENT
+  WITHDRAWAL
+}
+
+model SubscriptionPlan {
+  id            String         @id @default(uuid())
+  agronomistId  String
+  agronomist    User           @relation("AgronomistPlans", fields: [agronomistId], references: [id], onDelete: Cascade)
+  type          PlanType
+  price         Float
+  durationHours Int? // Null for unlimited ONE_TIME plans
+  title         String
+  description   String?
+  subscriptions Subscription[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Subscription {
+  id             String            @id @default(uuid())
+  farmerId       String
+  farmer         User              @relation("FarmerSubscriptions", fields: [farmerId], references: [id], onDelete: Cascade)
+  planId         String
+  plan           SubscriptionPlan  @relation(fields: [planId], references: [id], onDelete: Cascade)
+  hoursPurchased Int?
+  hoursUsed      Float             @default(0)
+  isUnlimited    Boolean           @default(false)
+  status         TransactionStatus @default(PENDING)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+}
+
+model Transaction {
+  id          String            @id @default(uuid())
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Float
+  currency    String            @default("XAF")
+  type        TransactionType
+  provider    PaymentProvider
+  phoneNumber String
+  reference   String            @unique
+  companyCut  Float?
+  netAmount   Float?
+  status      TransactionStatus @default(PENDING)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 }
