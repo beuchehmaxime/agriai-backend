@@ -2,11 +2,15 @@ import { DiagnosisRepository } from './diagnosis.repository.js';
 import { ImageRepository } from '../image/image.repository.js';
 import { ImageService } from '../image/image.service.js';
 import axios from 'axios';
-import { GoogleGenAI } from '@google/genai';
+import Anthropic from '@anthropic-ai/sdk';
+import { SelectedCropsData } from '../../shared/utils/data.js';
 // ML Service URL
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8007';
-// Gemini API Key
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+// Shared secret so the ML service rate-limits per user instead of per backend IP
+const ML_SERVICE_API_KEY = process.env.ML_SERVICE_API_KEY;
+// Claude API
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-opus-5';
 export class DiagnosisService {
     diagnosisRepository;
     imageRepository;
@@ -16,11 +20,14 @@ export class DiagnosisService {
         this.diagnosisRepository = new DiagnosisRepository();
         this.imageRepository = new ImageRepository();
         this.imageService = new ImageService();
-        if (GEMINI_API_KEY) {
-            this.ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+        if (ANTHROPIC_API_KEY) {
+            this.ai = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
         }
         else {
-            console.warn('GEMINI_API_KEY is not set. Gemini integration will not work.');
+            console.warn('ANTHROPIC_API_KEY is not set. Claude integration will not work.');
+        }
+        if (!ML_SERVICE_API_KEY) {
+            console.warn('ML_SERVICE_API_KEY is not set. All users will share the ML service per-IP rate limit.');
         }
     }
     async diagnoseImage(userId, imageId, cropType, location, symptoms) {
@@ -32,25 +39,38 @@ export class DiagnosisService {
         // ===============================
         let disease = 'Unknown';
         let confidence = 0;
-        try {
-            console.log(`Sending image to ML Service: ${ML_SERVICE_URL}/${cropType}/predict`);
-            const mlResponse = await axios.post(`${ML_SERVICE_URL}/${cropType}/predict`, {
-                imageUrl: image.url,
-                cropType,
-                symptoms,
-                location
-            });
-            if (mlResponse.data) {
-                const rawDisease = mlResponse.data.disease || 'Unknown';
-                disease = this.formatDiseaseName(rawDisease);
-                confidence = mlResponse.data.confidence || 0;
+        // Only crops with a trained model go to the ML service; the rest are
+        // diagnosed by Claude from the image alone.
+        if (SelectedCropsData.includes(cropType)) {
+            try {
+                console.log(`Sending image to ML Service: ${ML_SERVICE_URL}/${cropType}/predict`);
+                const mlResponse = await axios.post(`${ML_SERVICE_URL}/${cropType}/predict`, {
+                    imageUrl: image.url,
+                    cropType,
+                    symptoms,
+                    location
+                }, {
+                    headers: ML_SERVICE_API_KEY
+                        ? { 'X-API-Key': ML_SERVICE_API_KEY, 'X-User-Id': userId }
+                        : undefined,
+                });
+                if (mlResponse.data) {
+                    const rawDisease = mlResponse.data.disease || 'Unknown';
+                    disease = this.formatDiseaseName(rawDisease);
+                    confidence = mlResponse.data.confidence || 0;
+                }
+            }
+            catch (error) {
+                if (axios.isAxiosError(error) && error.response?.status === 429) {
+                    console.error(`ML Service rate limit hit for user ${userId}`);
+                }
+                else {
+                    console.error('Error calling ML Service:', error instanceof Error ? error.message : error);
+                }
             }
         }
-        catch (error) {
-            console.error('Error calling ML Service:', error instanceof Error ? error.message : error);
-        }
         // ===============================
-        // 2. CALL GEMINI (NEW SDK STYLE)
+        // 2. CALL CLAUDE
         // ===============================
         let advice = 'No advice available.';
         if (this.ai) {
@@ -63,14 +83,14 @@ export class DiagnosisService {
                 let prompt = "";
                 if (disease === 'Unknown') {
                     prompt = `
-                        The user uploaded a crop image for diagnosis.
+                        The user uploaded the attached crop image for diagnosis.
 
                         ${contextInfo}
 
                         The automated ML system could not identify the disease.
 
                         Provide:
-                        1. Possible diseases based on crop and symptoms
+                        1. Possible diseases based on the image, crop and symptoms
                         2. General crop health advice
                         3. Signs to inspect on leaves/stems
                         4. Preventive maintenance tips
@@ -95,14 +115,38 @@ export class DiagnosisService {
                         Keep it concise and farmer-friendly.
                         `;
                 }
-                const response = await this.ai.models.generateContent({
-                    model: "gemini-3-flash-preview",
-                    contents: prompt,
+                // Without an ML result, let Claude look at the photo itself
+                const content = disease === 'Unknown'
+                    ? [
+                        { type: 'image', source: { type: 'url', url: image.url } },
+                        { type: 'text', text: prompt },
+                    ]
+                    : [{ type: 'text', text: prompt }];
+                const response = await this.ai.messages.create({
+                    model: ANTHROPIC_MODEL,
+                    max_tokens: 16000,
+                    messages: [{ role: 'user', content }],
                 });
-                advice = response.text ?? 'No advice generated.';
+                if (response.stop_reason === 'refusal') {
+                    console.warn('Claude declined the diagnosis request:', response.stop_details?.category);
+                    advice = 'Could not retrieve advice at this time.';
+                }
+                else {
+                    const text = response.content
+                        .filter((block) => block.type === 'text')
+                        .map(block => block.text)
+                        .join('\n')
+                        .trim();
+                    advice = text || 'No advice generated.';
+                }
             }
             catch (error) {
-                console.error('Error calling Gemini API:', error);
+                if (error instanceof Anthropic.APIError) {
+                    console.error(`Claude API error ${error.status}:`, error.message);
+                }
+                else {
+                    console.error('Error calling Claude API:', error);
+                }
                 advice = 'Could not retrieve advice at this time.';
             }
         }
