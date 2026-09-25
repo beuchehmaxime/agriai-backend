@@ -8,8 +8,9 @@
     "check": "tsc --noEmit",
     "dev": "tsx watch src/server.ts",
     "build": "prisma generate && tsc",
-    "start": "prisma migrate deploy && node dist/seed-admin.js --on-start && node dist/server.js",
-    "seed:admin": "tsx src/seed-admin.ts"
+    "start": "prisma migrate deploy && node dist/seed.js --on-start && node dist/server.js",
+    "seed": "tsx src/seed.ts",
+    "seed:admin": "tsx src/seed.ts --admin-only"
   },
   "keywords": [],
   "author": "",
