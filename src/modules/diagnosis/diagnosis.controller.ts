@@ -3,7 +3,6 @@ import { DiagnosisService } from './diagnosis.service.js';
 import { ImageService } from '../image/image.service.js';
 import { sendSuccess, sendError } from '../../shared/utils/response.utils.js';
 import { AuthRequest } from '../../types/auth-request.js';
-import { SelectedCropsData } from '../../shared/utils/data.js';
 
 const diagnosisService = new DiagnosisService();
 const imageService = new ImageService();
@@ -20,12 +19,8 @@ export const predictDisease = async (req: AuthRequest, res: Response) => {
         if (!req.file) {
             return sendError(res, 'No image file provided', 400);
         }
-        if (!cropType) {
-            return sendError(res, 'cropType is required for ML prediction', 400);
-        }
-
-        if (!SelectedCropsData.includes(cropType.toLowerCase())) {
-            return sendError(res, 'Your selected crop is not supported yet. Please select a different crop.', 400);
+        if (!cropType || typeof cropType !== 'string' || !cropType.trim()) {
+            return sendError(res, 'cropType is required', 400);
         }
 
         // 1. Upload/Save Image first
@@ -35,7 +30,7 @@ export const predictDisease = async (req: AuthRequest, res: Response) => {
         const diagnosis = await diagnosisService.diagnoseImage(
             userId,
             image.id,
-            cropType.toLowerCase(),
+            cropType.trim().toLowerCase(),
             location || '',
             symptoms
         );

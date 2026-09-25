@@ -42,7 +42,7 @@ DiagnosisRepository.prototype.create = async (data: any) => {
 async function runTest() {
     console.log('--- Starting Diagnosis Integration Test ---');
     console.log('ML_SERVICE_URL:', process.env.ML_SERVICE_URL || 'Not Set (Using default)');
-    console.log('GEMINI_API_KEY:', process.env.GEMINI_API_KEY ? 'Set' : 'Not Set');
+    console.log('ANTHROPIC_API_KEY:', process.env.ANTHROPIC_API_KEY ? 'Set' : 'Not Set');
 
     const service = new DiagnosisService();
 

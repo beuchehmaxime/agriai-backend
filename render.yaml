@@ -24,9 +24,13 @@ services:
       # Secrets. 'sync: false' means Render will prompt you to enter these in the dashboard securely.
       - key: JWT_SECRET
         sync: false
-      - key: GEMINI_API_KEY
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANTHROPIC_MODEL
         sync: false
       - key: ML_SERVICE_URL
+        sync: false
+      - key: ML_SERVICE_API_KEY
         sync: false
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
